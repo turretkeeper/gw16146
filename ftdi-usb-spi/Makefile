@@ -21,13 +21,19 @@ define KernelPackage/ftdi-usb-spi
 endef
 
 define KernelPackage/ftdi-usb-spi/description
-  Supplementary driver for NRC7292
+  Supplementary driver for GW16146
 endef
+
+include $(INCLUDE_DIR)/kernel-defaults.mk
 
 define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) M="$(PKG_BUILD_DIR)" modules
+	+$(KERNEL_MAKE) $(PKG_JOBS) \
+		$(PKG_MAKE_FLAGS) \
+		M="$(PKG_BUILD_DIR)" \
+		modules
 endef
 
-#include $(INCLUDE_DIR)/kernel-defaults.mk
+#+$(KERNEL_MAKE) -C $(PKG_BUILD_DIR) modules
+#export KDIR=$(KERNEL_BUILD_DIR)
 
 $(eval $(call KernelPackage,ftdi-usb-spi))
