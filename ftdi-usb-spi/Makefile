@@ -14,26 +14,37 @@ include $(INCLUDE_DIR)/package.mk
 
 define KernelPackage/ftdi-usb-spi
   SUBMENU:=Network Support
-  TITLE:=FTDI USB SPI
+  TITLE:=FTDI FT232H SPI controller
   FILES:=$(PKG_BUILD_DIR)/spi-ft232h.$(LINUX_KMOD_SUFFIX)
   DEPENDS:=+kmod-usb-core
   AUTOLOAD:=$(call AutoLoad,50,ftdi-usb-spi)
 endef
 
+GCC_VERSION=$(shell echo "$(CONFIG_GCC_VERSION)" | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
+
+MAKE_FLAGS+= \
+	TARGET_NAME=$(CONFIG_TARGET_NAME) \
+	TOOL_PATH=$(firstword $(TOOLCHAIN_BIN_DIRS)) \
+	SYS_PATH=$(LINUX_DIR) \
+	TOOLPREFIX=$(TARGET_CROSS) \
+	KVER=$(LINUX_VERSION) \
+	KDIR=$(LINUX_DIR) \
+	ARCH=$(LINUX_KARCH) \
+	TARGET_SUFFIX=$(CONFIG_TARGET_SUFFIX) \
+	GCC_VERSION=$(GCC_VERSION) \
+	EXTRA_CFLAGS="-fno-stack-protector -I$(STAGING_DIR)/usr/include" \
+	SoC=$(CONFIG_TARGET_SUBTARGET) \
+	SHELL="$(BASH)"
+
 define KernelPackage/ftdi-usb-spi/description
-  Supplementary driver for GW16146
+  FT232H supports SPI in MPSSE mode. This driver provides MPSSE
+  SPI controller in master mode.
 endef
 
 include $(INCLUDE_DIR)/kernel-defaults.mk
 
 define Build/Compile
-	+$(KERNEL_MAKE) $(PKG_JOBS) \
-		$(PKG_MAKE_FLAGS) \
-		M="$(PKG_BUILD_DIR)" \
-		modules
+	+$(MAKE) modules -C $(PKG_BUILD_DIR) $(MAKE_FLAGS)
 endef
-
-#+$(KERNEL_MAKE) -C $(PKG_BUILD_DIR) modules
-#export KDIR=$(KERNEL_BUILD_DIR)
 
 $(eval $(call KernelPackage,ftdi-usb-spi))
