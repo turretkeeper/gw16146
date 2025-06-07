@@ -20,12 +20,28 @@ define KernelPackage/nrc7292
   AUTOLOAD:=$(call AutoLoad,60,nrc7292)
 endef
 
+GCC_VERSION=$(shell echo "$(CONFIG_GCC_VERSION)" | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
+
+MAKE_FLAGS+= \
+	TARGET_NAME=$(CONFIG_TARGET_NAME) \
+	TOOL_PATH=$(firstword $(TOOLCHAIN_BIN_DIRS)) \
+	SYS_PATH=$(LINUX_DIR) \
+	TOOLPREFIX=$(TARGET_CROSS) \
+	KVER=$(LINUX_VERSION) \
+	KDIR=$(LINUX_DIR) \
+	ARCH=$(LINUX_KARCH) \
+	TARGET_SUFFIX=$(CONFIG_TARGET_SUFFIX) \
+	GCC_VERSION=$(GCC_VERSION) \
+	EXTRA_CFLAGS="-fno-stack-protector -I$(STAGING_DIR)/usr/include" \
+	SoC=$(CONFIG_TARGET_SUBTARGET) \
+	SHELL="$(BASH)"
+
 define KernelPackage/nrc7292/description
   Driver for Newracom NRC7292 chips
 endef
 
 define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR)/package/src/nrc M="$(PKG_BUILD_DIR)/package/src/nrc" modules
+	+$(KERNEL_MAKE) modules -C $(LINUX_DIR) M="$(PKG_BUILD_DIR)/package/src/nrc" $(MAKE_FLAGS)
 endef
 
 define KernelPackage/nrc7292/install
@@ -34,6 +50,5 @@ define KernelPackage/nrc7292/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/package/evk/binary/nrc7292_cspi.bin $(1)/lib/firmware/
 endef
 
-#include $(INCLUDE_DIR)/kernel-defaults.mk
 
 $(eval $(call KernelPackage,nrc7292))
